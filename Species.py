@@ -10,19 +10,29 @@ class Species:
         self.x = np.zeros(n_particles)
         self.v = np.zeros(n_particles)
 
-    def deposite_current(self, grid):
-        # Placeholder for current deposition logic
-        grid.rho.fill(0) # Reset charge density
-        grid.J.fill(0)   # Reset current density
+    def deposite_charge_currents(self, grid):
+        #--- CRRENT DENSITYS ARE AT HALF STEPS IN TIME ---
+        grid.rho.fill(0)
+        grid.J.fill(0)
+
+        inv_dx = 1.0 / grid.dx
+
         for i in range(self.n_particles):
-            # Simple 'cloud-in-cell' deposition scheme for 1D
-            cell_index = int(self.x[i] / grid.dx)
-            h = cell_index -i 
-            W_r = 1 - abs(h)
-            W_l = abs(h)
+            pos_in_cell = self.x[i] * inv_dx   #get position in terms of cell units
+            idx_l = np.floor(pos_in_cell).astype(int)  #get the left cell index
+            idx_r = idx_l + 1 #right cell index
+            h = pos_in_cell - idx_l    #get the fractional distance to the right cell
+            W_l = 1 - h #weight for left cell
+            W_r = h #weight for right cell
             weights = [W_l, W_r]
-            np.add.at(grid.rho, [cell_index, cell_index+1], self.charge * weights)
-            np.add.at(grid.J, [cell_index, cell_index+1], self.charge * self.v[i] * weights)
+
+            if 0 <= idx_l < grid.nx - 1:
+                #update the charge density/current density on the grid using the weights
+                grid.rho[idx_l] += self.charge * weights[0] *inv_dx
+                grid.rho[idx_r] += self.charge * weights[1] *inv_dx
+
+                grid.J[idx_l] += self.charge * self.v[i] * weights[0] * inv_dx
+                grid.J[idx_r] += self.charge * self.v[i] * weights[1] *inv_dx
 
     def push(self, grid, dt):
         """The Boris Pusher logic."""

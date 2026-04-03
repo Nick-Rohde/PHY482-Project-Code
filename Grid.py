@@ -16,14 +16,14 @@ class Grid:
         # Update E and B based on J and rho using a simple finite-difference time-domain (FDTD) method
 
         for i in range(1, self.nx - 1):
-            # uopdate B to dt/2 using E for half step
-            self.B[i] += - (self.E[i+1] - self.E[i]) * dt / (2 * self.dx)
+            # update staggered B to dt + dt/2 using E for half step
+            self.B[i] += - (self.E[i+1] - self.E[i]) * (dt / self.dx)
 
+        for i in range(1, self.nx - 1):
             # update E to dt using B for full step
-            self.E[i] += (self.B[i] - self.B[i-1]) * dt / self.dx - self.J[i] * dt / self.dx
+            curl_B = (self.B[i] - self.B[i-1]) / self.dx
+            self.E[i] += (curl_B - self.J[i]) * dt
 
-            #update B from dt/2 to dt for half step part 2
-            self.B[i] += - (self.E[i+1] - self.E[i]) * dt / (2 * self.dx)
 
     def interpolate_fields(self, x):
         """Interpolate E and B fields at particle position x."""
