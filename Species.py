@@ -6,7 +6,9 @@ class Species:
         self.mass = mass
         self.charge = charge
         self.n_particles = n_particles
-
+        
+        #position occurs at full steps in time
+        #Velocity occurs at half steps in time
         self.x = np.zeros(n_particles)
         self.v = np.zeros(n_particles)
 
@@ -38,7 +40,6 @@ class Species:
         """The Boris Pusher logic."""
         for i in range(self.n_particles):
             #Get E, B field at the particle
-            cell_index = int(self.x[i] / grid.dx)
             E,B= grid.interpolate_fields(self.x[i])
 
             #Boris pusher steps
