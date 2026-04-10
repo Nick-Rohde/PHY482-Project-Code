@@ -4,33 +4,81 @@ class Grid:
     def __init__(self, n_cells, length):
         self.nx = n_cells
         self.dx = length / n_cells
+        self.x_min = 0.0
+        self.x_max = length
         
-        # Field arrays (on the Yee lattice)
-        self.E = np.zeros(n_cells)
-        self.B = np.zeros(n_cells)
+        # Electric fields (on the Yee lattice)
+        self.Ex = np.zeros(n_cells)
+        self.Ey = np.zeros(n_cells)
+        self.Ez = np.zeros(n_cells)
+
+        # Magnetic fields (also on the Yee lattice)
+        self.Bx = np.zeros(n_cells)
+        self.By = np.zeros(n_cells)
+        self.Bz = np.zeros(n_cells)
+
         self.rho = np.zeros(n_cells) # Charge density
-        self.J = np.zeros(n_cells)   # Current density
+        self.Jx = np.zeros(n_cells)   # Current density in x direction
+        self.Jy = np.zeros(n_cells)   # Current density in y direction
+        self.Jz = np.zeros(n_cells)   # Current density in z direction
 
     def solve_fields(self, dt):
         """Solve Maxwell's equations."""
         # Update E and B based on J and rho using a simple finite-difference time-domain (FDTD) method
+        inv_dx = 1.0 / self.dx
 
+        # 1. Update B-field (Faraday's Law)
+        # Only By and Bz can change via d/dx
+        for i in range(self.nx - 1):
+            # dB_y/dt = dE_z/dx
+            self.By[i] += (self.Ez[i+1] - self.Ez[i]) * (dt * inv_dx)
+            # dB_z/dt = -dE_y/dx
+            self.Bz[i] -= (self.Ey[i+1] - self.Ey[i]) * (dt * inv_dx)
+
+        # 2. Update E-field (Ampere's Law)
         for i in range(1, self.nx - 1):
-            # update staggered B to dt + dt/2 using E for half step
-            self.B[i] += - (self.E[i+1] - self.E[i]) * (dt / self.dx)
+            # dE_y/dt = -dB_z/dx - J_y
+            curl_B_z = (self.Bz[i] - self.Bz[i-1]) * inv_dx
+            self.Ey[i] += (-curl_B_z - self.Jy[i]) * dt
+            
+            # dE_z/dt = dB_y/dx - J_z
+            curl_B_y = (self.By[i] - self.By[i-1]) * inv_dx
+            self.Ez[i] += (curl_B_y - self.Jz[i]) * dt
+            
+            # Longitudinal Field (Electrostatic)
+            # dE_x/dt = -J_x
+            self.Ex[i] += (-self.Jx[i]) * dt
 
-        for i in range(1, self.nx - 1):
-            # update E to dt using B for full step
-            curl_B = (self.B[i] - self.B[i-1]) / self.dx
-            self.E[i] += (curl_B - self.J[i]) * dt
 
 
-    def interpolate_fields(self, x):
+    def interpolate_fields(self, x_arr):
         """Interpolate E and B fields at particle position x."""
-        cell_index = int(x / self.dx)
-        h = cell_index - x / self.dx
-        W_r = 1 - abs(h)
-        W_l = abs(h)
-        E_interp = W_l * self.E[cell_index] + W_r * self.E[cell_index + 1]
-        B_interp = W_l * self.B[cell_index] + W_r * self.B[cell_index + 1]
-        return E_interp, B_interp
+
+        inv_dx = 1.0 / self.dx
+
+        relative_pos = (x - self.x_min) * inv_dx
+
+        #set up indexing and weighting for linear interpolation
+        idx_l = int(np.clip(np.floor(relative_pos), 0, self.nx - 2))        
+        idx_r = idx_l + 1
+        h = relative_pos - idx_l
+        W_l = 1 - h
+        W_r = h
+
+        #handle edge cases
+        if idx_r >= self.nx:
+            idx_r = self.nx - 1
+        if idx_l < 0:
+            idx_l = 0
+
+        #interpolate E fields
+        Ex = W_l * self.Ex[idx_l] + W_r * self.Ex[idx_r]
+        Ey = W_l * self.Ey[idx_l] + W_r * self.Ey[idx_r]
+        Ez = W_l * self.Ez[idx_l] + W_r * self.Ez[idx_r]
+
+        #interpolate B fields
+        Bx = W_l * self.Bx[idx_l] + W_r * self.Bx[idx_r]
+        By = W_l * self.By[idx_l] + W_r * self.By[idx_r]
+        Bz = W_l * self.Bz[idx_l] + W_r * self.Bz[idx_r]
+
+        return np.array([Ex, Ey, Ez]), np.array([Bx, By, Bz])
