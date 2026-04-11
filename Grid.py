@@ -58,9 +58,13 @@ class Grid:
             curl_B_y = (self.By[i] - self.By[prev_i]) * inv_dx
             self.Ez[i] += (curl_B_y - self.Jz[i]) * dt
             
-            # Longitudinal Field (Electrostatic)
-            # Gauss's Law: dE_x/dx = rho
-            self.Ex[i] += self.Ex[prev_i] + self.rho[i] * self.dx
+        # Longitudinal Field (Electrostatic)
+        # Gauss's Law: dE_x/dx = rho
+        net_rho = np.mean(self.rho)
+        self.Ex[0] = 0.0 # Boundary condition at the left edge
+        for i in range(1, self.nx):
+            self.Ex[i] = self.Ex[i-1] + (self.rho[i] - net_rho) * self.dx
+        self.Ex -= np.mean(self.Ex) # Remove any net bias in Ex
 
 
 
@@ -72,17 +76,11 @@ class Grid:
         relative_pos = (x - self.x_min) * inv_dx
 
         #set up indexing and weighting for linear interpolation
-        idx_l = int(np.clip(np.floor(relative_pos), 0, self.nx - 2))        
-        idx_r = idx_l + 1
-        h = relative_pos - idx_l
+        idx_l = int(np.floor(relative_pos)) % self.nx      
+        idx_r = (idx_l + 1) % self.nx
+        h = relative_pos - np.floor(relative_pos) #fractional distance to the right cell
         W_l = 1 - h
         W_r = h
-
-        #handle edge cases
-        if idx_r >= self.nx:
-            idx_r = self.nx - 1
-        if idx_l < 0:
-            idx_l = 0
 
         #interpolate E fields
         Ex = W_l * self.Ex[idx_l] + W_r * self.Ex[idx_r]

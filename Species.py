@@ -35,16 +35,15 @@ class Species:
 
             weights = [W_l, W_r]
 
-            if 0 <= idx_l < grid.nx - 1:
-                #update the charge density/current density on the grid using the weights
-                grid.rho[idx_l] += self.charge * weights[0] *inv_dx
-                grid.rho[idx_r] += self.charge * weights[1] *inv_dx
+            #update the charge density/current density on the grid using the weights
+            grid.rho[idx_l] += self.charge * weights[0] *inv_dx
+            grid.rho[idx_r] += self.charge * weights[1] *inv_dx
 
-                grid.Jx[idx_l] += self.charge * self.vx[i] * weights[0] * inv_dx
-                grid.Jx[idx_r] += self.charge * self.vx[i] * weights[1] *inv_dx
+            grid.Jx[idx_l] += self.charge * self.vx[i] * weights[0] * inv_dx
+            grid.Jx[idx_r] += self.charge * self.vx[i] * weights[1] *inv_dx
 
-                grid.Jy[idx_l] += self.charge * self.vy[i] * weights[0] * inv_dx
-                grid.Jy[idx_r] += self.charge * self.vy[i] * weights[1] * inv_dx
+            grid.Jy[idx_l] += self.charge * self.vy[i] * weights[0] * inv_dx
+            grid.Jy[idx_r] += self.charge * self.vy[i] * weights[1] * inv_dx
 
 
 
@@ -142,15 +141,14 @@ class Species:
             idx_l = idx_l % grid.nx
             idx_r = idx_r % grid.nx
             
-            if 0 <= idx_l < grid.nx - 1:
-                # Charge
-                grid.rho[idx_l] += self.charge * W_l * inv_dx
-                grid.rho[idx_r] += self.charge * W_r * inv_dx
-                
-                # Current in Y (the main Harris current)
-                grid.Jz[idx_l] += self.charge * self.vy[i] * W_l * inv_dx
-                grid.Jz[idx_r] += self.charge * self.vy[i] * W_r * inv_dx
+            # Charge
+            grid.rho[idx_l] += self.charge * W_l * inv_dx
+            grid.rho[idx_r] += self.charge * W_r * inv_dx
+            
+            # Current in Y (the main Harris current)
+            grid.Jz[idx_l] += self.charge * self.vy[i] * W_l * inv_dx
+            grid.Jz[idx_r] += self.charge * self.vy[i] * W_r * inv_dx
 
-                # Current in X (important for waves/instabilities)
-                grid.Jx[idx_l] += self.charge * self.vx[i] * W_l * inv_dx
-                grid.Jy[idx_l] += self.charge * self.vy[i] * W_l * inv_dx
+            # Current in X (important for waves/instabilities)
+            grid.Jx[idx_l] += self.charge * self.vx[i] * W_l * inv_dx
+            grid.Jy[idx_l] += self.charge * self.vy[i] * W_l * inv_dx
