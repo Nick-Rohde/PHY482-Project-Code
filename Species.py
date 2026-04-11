@@ -29,6 +29,10 @@ class Species:
             h = pos_in_cell - idx_l    #get the fractional distance to the right cell
             W_l = 1 - h #weight for left cell
             W_r = h #weight for right cell
+
+            idx_l = idx_l % grid.nx
+            idx_r = idx_r % grid.nx
+
             weights = [W_l, W_r]
 
             if 0 <= idx_l < grid.nx - 1:
@@ -59,7 +63,8 @@ class Species:
             
             #setp 2: Rotation by B
             t = (self.charge * B / self.mass) * (dt / 2)
-            s = 2 * t / (1 + t**2)
+            tmag2 = np.dot(t, t)
+            s = 2 * t / (1 + tmag2)
             v_prime = v_minus + np.cross(v_minus, t)
             v_plus = v_minus + np.cross(v_prime, s)
 
@@ -71,34 +76,51 @@ class Species:
             # Update position
             self.x[i] += self.vx[i] * dt
 
-            #reflection boundary conditions
-            eps = 1e-6 * grid.dx
+            #periodic boundary conditions
+            L = grid.x_max - grid.x_min
             if self.x[i] < grid.x_min:
-                self.x[i] = grid.x_min + (grid.x_min - self.x[i]) + eps
-                self.vx[i] *= -1.0
+                self.x[i] += L
             elif self.x[i] >= grid.x_max:
-                self.x[i] = grid.x_max - (self.x[i] - grid.x_max) - eps
-                self.vx[i] *= -1.0
+                self.x[i] -= L
    
 
 
-    def initialize_harris_particles(self, L, n0, v_th, u_drift, grid):
+    def initialize_harris_particles(self, L_sheet, n0, v_th, u_drift, grid, bg_frac = 0.2):
         """
         Initializes particle positions according to sech^2(z/L) 
         and velocities with a shifted Maxwellian (drift).
         """
-        # 1. Position: Sampling from sech^2 is tricky. 
-        # Usually done via inverse transform sampling: z = L * arctanh(2*rand - 1)
-        P = np.random.uniform(0.001, 0.999, self.n_particles) # Avoid log(0)
-        self.x = L * np.arctanh(2 * P - 1)
+        #set up fractions for background and sheet particles
+        n_bg = int(self.n_particles * bg_frac)
+        n_sheet = self.n_particles - n_bg
 
-        self.x = np.clip(self.x, grid.x_min + 1e-6, grid.x_max - grid.dx - 1e-6)
+        x_center = (grid.x_max + grid.x_min) / 2.0
+    
+        #Set up position/velocities for sheet particles
+
+        # Sampling from z = L * arctanh(2*rand - 1)
+        P = np.random.uniform(0.001, 0.999, n_sheet) # Avoid log(0)
+        x_sheet = x_center + (L_sheet / 2.0) * np.arctanh(2 * P - 1)
+        x_sheet = np.clip(x_sheet, grid.x_min + 1e-6, grid.x_max - grid.dx - 1e-6)
         
-        # 2. Velocity: Shifted Maxwellian
         # v_x and v_z are centered at 0, v_y has the drift u_drift
-        self.vx = np.random.normal(0, v_th, self.n_particles)
-        self.vy = np.random.normal(0, v_th, self.n_particles)
-        self.vz = np.random.normal(u_drift, v_th, self.n_particles)
+        vx_sheet = np.random.normal(0, v_th, n_sheet)
+        vy_sheet = np.random.normal(0, v_th, n_sheet)
+        vz_sheet = np.random.normal(u_drift, v_th, n_sheet)
+
+        # Set up position/velocities for background particles
+        x_bg = np.random.uniform(grid.x_min, grid.x_max, n_bg)
+
+        vx_bg = np.random.normal(0, v_th, n_bg)
+        vy_bg = np.random.normal(0, v_th, n_bg)
+        vz_bg = np.random.normal(0, v_th, n_bg)
+
+
+        #array combinding
+        self.x = np.concatenate([x_sheet, x_bg])
+        self.vx = np.concatenate([vx_sheet, vx_bg])
+        self.vy = np.concatenate([vy_sheet, vy_bg])
+        self.vz = np.concatenate([vz_sheet, vz_bg])
 
         
 
@@ -116,6 +138,9 @@ class Species:
             
             W_r = x_norm - idx_l
             W_l = 1.0 - W_r
+
+            idx_l = idx_l % grid.nx
+            idx_r = idx_r % grid.nx
             
             if 0 <= idx_l < grid.nx - 1:
                 # Charge
