@@ -121,6 +121,20 @@ class Species:
         self.vy = np.concatenate([vy_sheet, vy_bg])
         self.vz = np.concatenate([vz_sheet, vz_bg])
 
+    def initialize_two_stream(self, v_th, u_drift, grid):
+        """
+        Initializes particles uniformly across the grid with a drifting Maxwellian velocity.
+        """
+        #spread particles across entire grid
+        self.x = np.random.uniform(grid.x_min, grid.x_max, self.n_particles)
+        
+        #drive particles in vx
+        self.vx = np.random.normal(u_drift, v_th, self.n_particles)
+        
+        #set other velocities to be thermal noise
+        self.vy = np.random.normal(0, v_th, self.n_particles)
+        self.vz = np.random.normal(0, v_th, self.n_particles)
+
         
 
     def deposit_sources(self, grid):
