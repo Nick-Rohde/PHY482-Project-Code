@@ -67,8 +67,9 @@ class Simulation:
 
     def plot_phase_space(self, titlestring):
         '''Plots a Phase space plot of the particles position/velocity'''
+        '''
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-
+    
         # Shows the thermal spread and any electrostatic acceleration
         ax1.scatter(self.species_e1.x, self.species_e1.vx, s=0.5, alpha=0.2, color='blue', label='Electrons 1')
         ax1.scatter(self.species_e2.x, self.species_e2.vx, s=0.5, alpha=0.2, color='red', label='Electrons 2')
@@ -95,6 +96,19 @@ class Simulation:
         plt.tight_layout()
         plt.savefig("Plots/phase_space_plots_" + titlestring + ".pdf", dpi=300)
         plt.show()
+        '''
+        fig = plt.figure(figsize=(8,6))
+        plt.scatter(self.species_e1.x, self.species_e1.vx, s=0.5, alpha=0.2, color='blue', label='Electrons 1')
+        plt.scatter(self.species_e2.x, self.species_e2.vx, s=0.5, alpha=0.2, color='red', label='Electrons 2')
+        plt.title("Phase Space: x vs $v_x$ (Longitudinal) at " + titlestring)
+        plt.xlabel("Position (x)")
+        plt.ylabel("Velocity ($v_x$)")
+        plt.xlim(self.grid.x_min, self.grid.x_max)
+        plt.ylim(-0.3, 0.3) # Adjust based on your v_th
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig("Plots/phase_space_plots_" + titlestring + ".pdf", dpi=300)
 
     def plot_results(self):
         ''' plots the results determined in the main loop'''
