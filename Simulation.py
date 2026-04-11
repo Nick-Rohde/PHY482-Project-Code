@@ -21,12 +21,12 @@ class Simulation:
 
         self.species_e1 = Species('-e', 1, -1/100000, 100000) #electron example
         self.species_e2 = Species('-e', 1, -1/100000, 100000) #electron example
-        #self.species_I = Species('I', 1, 1/100000, 100000) #ion example
+        #self.species_e2 = Species('I', 1, 1/100000, 100000) #ion example
 
         #L_sheet = self.grid.nx * self.grid.dx * 0.1  # Example thickness for the current sheet
 
-        #self.species_e.initialize_harris_particles(L_sheet, 1, 0.1, -0.2, self.grid)
-        #self.species_I.initialize_harris_particles(L_sheet, 1, 0.1, 0.5, self.grid)
+        #self.species_e1.initialize_harris_particles(L_sheet, 1, 0.1, -0.2, self.grid)
+        #self.species_e2.initialize_harris_particles(L_sheet, 1, 0.1, 0.5, self.grid)
         
         self.species_e1.initialize_two_stream(0.02, -0.2, self.grid)
         self.species_e2.initialize_two_stream(0.02, -0.2, self.grid)
