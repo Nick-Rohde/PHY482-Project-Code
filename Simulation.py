@@ -11,8 +11,8 @@ class Simulation:
         self.species = None
         self.T = []
         self.V = []
-        self.By_snapshots = []
-        self.Jz_snapshots = []
+        self.Ex_snapshots = []
+        self.rho_snapshots = []
         self.shot_steps = []
 
 
@@ -47,8 +47,11 @@ class Simulation:
             self.species_e2.push(self.grid, self.dt)
 
             #calculate KE and PE for plots!
-            mag_energy = np.sum(self.grid.Bx**2 + self.grid.By**2 + self.grid.Bz**2) * self.grid.dx
-            self.V.append(mag_energy)
+            #mag_energy = np.sum(self.grid.Bx**2 + self.grid.By**2 + self.grid.Bz**2) * self.grid.dx
+            #self.V.append(mag_energy)
+
+            elec_energy = np.sum(self.grid.Ex**2) * self.grid.dx
+            self.V.append(elec_energy)
 
             # Kinetic Energy: 0.5 * m * v^2
             ke_e = 0.5 * self.species_e1.mass * np.sum(self.species_e1.vx**2 + self.species_e1.vy**2 + self.species_e1.vz**2)
@@ -56,8 +59,8 @@ class Simulation:
             self.T.append(ke_e + ke_i)
 
             if step % shot_interval == 0 or step == self.n_steps - 1:
-                self.By_snapshots.append(self.grid.By.copy())
-                self.Jz_snapshots.append(self.grid.Jz.copy())
+                self.Ex_snapshots.append(self.grid.Ex.copy())
+                self.rho_snapshots.append(self.grid.rho.copy())
                 self.shot_steps.append(step)
 
             
@@ -112,18 +115,18 @@ class Simulation:
         for i, step in enumerate(self.shot_steps):
             plt.figure(figsize=(12,5))
             plt.subplot(1,2,1)
-            plt.plot(x_axis, self.By_snapshots[i], label='By')
-            plt.title(f'By at Step {step}')
+            plt.plot(x_axis, self.Ex_snapshots[i], label='Ex')
+            plt.title(f'Ex at Step {step}')
             plt.xlabel('x')
-            plt.ylabel('By')
+            plt.ylabel('Ex')
             plt.grid(True, linestyle='--', alpha=0.5)
             plt.legend()
 
             plt.subplot(1,2,2)
-            plt.plot(x_axis, self.Jz_snapshots[i], label='Jz')
-            plt.title(f'Jz at Step {step}')
+            plt.plot(x_axis, self.rho_snapshots[i], label='Rho')
+            plt.title(f'Rho at Step {step}')
             plt.xlabel('x')
-            plt.ylabel('Jz')
+            plt.ylabel('Rho')
             plt.grid(True, linestyle='--', alpha=0.5)
             plt.legend()
 
