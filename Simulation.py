@@ -19,23 +19,29 @@ class Simulation:
     def run(self):
         shot_interval = self.n_steps // 10
 
-        self.species_e1 = Species('-e', 1, -1/100000, 100000) #electron example
-        self.species_e2 = Species('-e', 1, -1/100000, 100000) #electron example
-        #self.species_e2 = Species('I', 1, 1/100000, 100000) #ion example
+        self.species_e1 = Species('-e', 1, -1, 100000) #electron example
+        self.species_e2 = Species('-e', 1, -1, 100000) #electron example
+        #self.species_e2 = Species('I', 1, 1, 100000) #ion example
 
         #L_sheet = self.grid.nx * self.grid.dx * 0.1  # Example thickness for the current sheet
 
         #self.species_e1.initialize_harris_particles(L_sheet, 1, 0.1, -0.2, self.grid)
         #self.species_e2.initialize_harris_particles(L_sheet, 1, 0.1, 0.5, self.grid)
         
-        self.species_e1.initialize_two_stream(0.02, -0.2, self.grid)
+        self.species_e1.initialize_two_stream(0.02, 0.2, self.grid)
         self.species_e2.initialize_two_stream(0.02, -0.2, self.grid)
+
         self.species_e1.deposit_sources(self.grid)
         self.species_e2.deposit_sources(self.grid)
         self.grid.init_fields(B0=1.0)
         self.plot_phase_space("Initial")
         for step in range(self.n_steps):
             # Deposit charge and current from all species onto the grid
+            self.grid.rho.fill(0)
+            self.grid.Jy.fill(0)
+            self.grid.Jx.fill(0)
+            self.grid.Jz.fill(0)
+
             self.species_e1.deposite_charge_currents(self.grid)
             self.species_e2.deposite_charge_currents(self.grid)
 
@@ -62,6 +68,7 @@ class Simulation:
                 self.Ex_snapshots.append(self.grid.Ex.copy())
                 self.rho_snapshots.append(self.grid.rho.copy())
                 self.shot_steps.append(step)
+                self.plot_phase_space(f"Step {step}")
 
             
 
@@ -104,17 +111,18 @@ class Simulation:
         plt.xlabel("Position (x)")
         plt.ylabel("Velocity ($v_x$)")
         plt.xlim(self.grid.x_min, self.grid.x_max)
-        plt.ylim(-0.3, 0.3) # Adjust based on your v_th
+        plt.ylim(-0.8, 0.8) # Adjust based on your v_th
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.legend()
         plt.tight_layout()
         plt.savefig("Plots/phase_space_plots_" + titlestring + ".pdf", dpi=300)
+        plt.close(fig)
 
     def plot_results(self):
         ''' plots the results determined in the main loop'''
 
         #energy plot
-        plt.figure(figsize=(8,6))
+        fig = plt.figure(figsize=(8,6))
         plt.plot(self.T, label='Kinetic Energy')
         plt.plot(self.V, label='Magnetic Energy')
         plt.xlabel('Time Step')
@@ -123,11 +131,12 @@ class Simulation:
         plt.legend()
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.savefig("Plots/energy_evolution.pdf", dpi=300)
+        plt.close(fig)
 
         # Plot snapshots of By and Jz
         x_axis = np.linspace(self.grid.x_min, self.grid.x_max, self.grid.nx)
         for i, step in enumerate(self.shot_steps):
-            plt.figure(figsize=(12,5))
+            fig = plt.figure(figsize=(12,5))
             plt.subplot(1,2,1)
             plt.plot(x_axis, self.Ex_snapshots[i], label='Ex')
             plt.title(f'Ex at Step {step}')
@@ -146,4 +155,5 @@ class Simulation:
 
             plt.tight_layout()
             plt.savefig(f'Plots/field_snapshots_step_{step}.pdf', dpi=300)
+            plt.close(fig)
 
