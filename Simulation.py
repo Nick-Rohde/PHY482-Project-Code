@@ -124,7 +124,7 @@ class Simulation:
         #energy plot
         fig = plt.figure(figsize=(8,6))
         plt.plot(self.T, label='Kinetic Energy')
-        plt.plot(self.V, label='Magnetic Energy')
+        plt.plot(self.V, label='Electric Field Energy')
         plt.xlabel('Time Step')
         plt.ylabel('Energy')
         plt.title('Energy Evolution')
