@@ -115,7 +115,7 @@ class Simulation:
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.legend()
         plt.tight_layout()
-        plt.savefig("Plots/phase_space_plots_" + titlestring + ".pdf", dpi=300)
+        plt.savefig("Plots/phase_space_plots_" + titlestring + ".png", dpi=300)
         plt.close(fig)
 
     def plot_results(self):
@@ -130,7 +130,7 @@ class Simulation:
         plt.title('Energy Evolution')
         plt.legend()
         plt.grid(True, linestyle='--', alpha=0.5)
-        plt.savefig("Plots/energy_evolution.pdf", dpi=300)
+        plt.savefig("Plots/energy_evolution.png", dpi=300)
         plt.close(fig)
 
         # Plot snapshots of By and Jz
@@ -154,6 +154,6 @@ class Simulation:
             plt.legend()
 
             plt.tight_layout()
-            plt.savefig(f'Plots/field_snapshots_step_{step}.pdf', dpi=300)
+            plt.savefig(f'Plots/field_snapshots_step_{step}.png', dpi=300)
             plt.close(fig)
 
